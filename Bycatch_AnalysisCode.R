@@ -20,7 +20,7 @@ library(fiftystater)
 library(ggjoy)
 library(ggpubr)
 library(png)
-library("SDMTools")
+library(SDMTools)
 
 #------LOAD DATA-------
 #Data can be found on github, contains bycatch summary data for all fisheries and years
@@ -31,6 +31,10 @@ data$Fishery_Tier <- ifelse(data$Fishery_Tier==4,1,
                             ifelse(data$Fishery_Tier==3,2,
                                    ifelse(data$Fishery_Tier==2,3,
                                           ifelse(data$Fishery_Tier==1,4,NA))))
+
+# Change combined gears to longline
+data <- data %>% 
+  mutate(GearType_general = replace(GearType_general, GearType_general == "combined gears", "longline"))
 
 #Normalise data betwen 0 and 1 
 range01 <- function(x, ...){(x - min(x, ...)) / (max(x, ...) - min(x, ...))}
@@ -59,7 +63,7 @@ data$criteria_se <- data$criteria_sd / sqrt(data$ncrit)
 unique(data$Fishery_ShortName[data$mean_criteria>quantile(data$mean_criteria, probs = c(0.90), na.rm=T)[1]]) 
 
 #---Figure 1----
-bycatch=read.csv('SummaryData_Nov2019_AllFisheryYears.csv') %>% 
+bycatch <- data %>% 
   select(c(GearType_general,Region)) %>% group_by(GearType_general,Region) %>% 
   summarise(count=n()) %>% 
   spread(GearType_general,count) %>% 
@@ -91,8 +95,8 @@ p <- ggplot(master, aes(map_id = state)) +
   coord_map()
 p=p+  geom_scatterpie(aes(x=x,y=y,r = 4,),data=bycatch,cols=colnames(bycatch)[2:10],color=NA)+coord_fixed() +
   theme(panel.background = element_blank())+ theme(panel.border = element_rect(colour = NA,fill=NA),legend.key.size = unit(.5,'lines'))+
-  scale_fill_manual(breaks=c("combined gears","dredge","gillnet","line","longline","pots and traps","purse seine","trawl","troll"),
-                    values=c("#8da38e","#9f7bb2","#7dac33","#c64f79","#93ccaf","#8e97ee","#3c4d63","grey","#4d543d","#59663e","#ffca33","#557e83","#c5703f","#4d304b","#69494f"))+
+  scale_fill_manual(breaks=c("dredge","gillnet","line","longline","pots and traps","purse seine","trawl","troll"),
+                    values=c("#7dac33","#c64f79","#93ccaf","#8e97ee","#3c4d63","grey","#4d543d","#59663e","#ffca33","#557e83","#c5703f","#4d304b","#69494f"))+
   guides(fill=guide_legend(title="Gear types"))+theme(legend.position=c(.18,.5),legend.justification = c(.9,.9))+theme(legend.text=element_text(size=6),legend.title = element_text(size=6))+
   annotate("text",x=-117.5,y=14,label="Alaska",size=2,color="#555555")+annotate("text",x=-68,y=31,label="Northeast",size=2,color="#555555")+
   annotate("text",x=-105,y=14,label="Pacific Islands",size=2,color="#555555")+annotate("text",x=-74,y=18,label="Southeast",size=2,color="#555555")+
@@ -103,6 +107,7 @@ p=p+  geom_scatterpie(aes(x=x,y=y,r = 4,),data=bycatch,cols=colnames(bycatch)[2:
 #ggtitle("Percentage of fisheries in each gear type in the five bycatch reporting regions")+theme(plot.title = element_text(size=6))
 
 p
+
 
 png("Fig1.png",width=5, height=5, units="in", res=400)
 par(ps=10)
@@ -117,105 +122,81 @@ dev.off()
 
 #---Figure 2----
 # get silhouette images for figures
-imgshark <- png::readPNG("./shark.png")
+# get silhouette images for figures
+imgshark <- png::readPNG("./shark_hires.png")
 rastshark <- grid::rasterGrob(imgshark, interpolate = T)
-imgcrab <- png::readPNG("./crab.png")
+imgcrab <- png::readPNG("./crab_hires.png")
 rastcrab <- grid::rasterGrob(imgcrab, interpolate = T)
-imgjelly <- png::readPNG("./jelly.png")
+imgjelly <- png::readPNG("./jelly_hires.png")
 rastjelly <- grid::rasterGrob(imgjelly, interpolate = T)
-imgdolphin <- png::readPNG("./dolphin.png")
+imgdolphin <- png::readPNG("./dolphin_hires.png")
 rastdolphin <- grid::rasterGrob(imgdolphin, interpolate = T)
-imgpinniped <- png::readPNG("./pinniped.png")
+imgpinniped <- png::readPNG("./pinniped_hires.png")
 rastpinniped <- grid::rasterGrob(imgpinniped, interpolate = T)
-imgseaturtle <- png::readPNG("./seaturtle.png")
+imgseaturtle <- png::readPNG("./seaturtle_hires.png")
 rastseaturtle <- grid::rasterGrob(imgseaturtle, interpolate = T)
-imgfulmar <- png::readPNG("./fulmar.png")
+imgfulmar <- png::readPNG("./fulmar_hires.png")
 rastfulmar <- grid::rasterGrob(imgfulmar, interpolate = T)
-imgalbatross <- png::readPNG("./albatross.png")
+imgalbatross <- png::readPNG("./albatross_hires.png")
 rastalbatross <- grid::rasterGrob(imgalbatross, interpolate = T)
-
-#read in data
-d1 <- read_csv("SummaryData_September2019_AnalysisExport_AllFisheryYears_MMPAweighted.csv")
-d1$Year <- as.factor(d1$Year)
-d1$Region <- as.factor(d1$Region)
 
 
 # identifying quantiles for break points
-quantile(d1$Bycatch_ratio, probs = c(0.5, 0.75), na.rm = TRUE)
-quantile(d1$TotalBycatch_inds, probs = c(0.5, 0.75), na.rm = TRUE)
+quantile(data$Bycatch_ratio, probs = c(0.5, 0.75), na.rm = TRUE)
+quantile(data$TotalBycatch_inds, probs = c(0.5, 0.75), na.rm = TRUE)
 
 #adding columms changing continuous values to discrete for figure
-d1 <- d1 %>% mutate(
+data <- data %>% mutate(
   BR_ratio_cat = cut(Bycatch_ratio, breaks=c(-Inf, 0.1480491, 0.3037714, Inf), 
                      labels=c("low (<0.15)","moderate (0.15-0.30)","high (>0.30)")),
-  TotalBycatch_SBST_cat = cut(TotalBycatch_inds, breaks=c(-Inf, 0, 26.875, Inf),
-                              labels=c("none","moderate (1-26)","high (>26)")),
+  TotalBycatch_SBST_cat = cut(TotalBycatch_inds, breaks=c(-Inf, 0, 50.5, Inf),  # 26.875
+                              labels=c("none","moderate (1-50)","high (>50)")),
   MMPA_cat = case_when(MMPA == 1 ~ "III",
                        MMPA == 2 ~ "II",
                        MMPA == 3 ~ "I"))
 
 # defining the color palette
-HW_palette <- c("#9f7bb2", "#7dac33","#c64f79","#93ccaf","#8e97ee", "#59663e","#ffca33", "#c5703f","#4d304b")
+HW_palette <- c("#7dac33","#c64f79","#93ccaf","#8e97ee", "#59663e","#ffca33", "#c5703f","#4d304b")
 
-# bycatch ratio for fish and inverts (A)
-BR_gear <- ggplot(filter(d1, BR_ratio_cat != "NA"), 
+BR_gear <- ggplot(filter(data, BR_ratio_cat != "NA"), 
                   aes(BR_ratio_cat)) +
   geom_bar(aes(fill = GearType_general)) +
   ylab("Number of fisheries") +
   xlab("Bycatch ratio of fish and invertebrates") +
   guides(fill=guide_legend(title="gear type")) +
   scale_fill_manual(values=HW_palette) +
-  theme_classic()+
-  theme(axis.title.x = element_text(face="bold", size=12),
-        axis.text.y  = element_text(size=12),
-        axis.text.x = element_text(size=11),
-        axis.title.y = element_text(face="bold",size=12),
-        legend.text=element_text(size=10),
-        strip.text.x = element_text(size = 12)) +
-  annotation_custom(rastshark, ymin = 160, ymax = 190, xmin = 0, xmax = 5) +
+  theme_classic(base_size = 20) +
+  annotation_custom(rastshark, ymin = 165, ymax = 190, xmin = 0.25, xmax = 5) +
   annotation_custom(rastcrab, ymin = 140, ymax = 160, xmin = 1) +
   annotation_custom(rastjelly, ymin = 140, ymax = 160, xmin = 2) 
 BR_gear
 
 
-#bycatch of seabirds and sea turtles (B)
-B_indSBST_gear <- ggplot(filter(d1, TotalBycatch_SBST_cat != "NA"), 
+B_indSBST_gear <- ggplot(filter(data, TotalBycatch_SBST_cat != "NA"), 
                          aes(TotalBycatch_SBST_cat)) +
   geom_bar(aes(fill = GearType_general)) +
   ylab("Number of fisheries") +
   xlab("Total bycatch of seabirds and sea turtles") +
   guides(fill=guide_legend(title="gear type")) +
   scale_fill_manual(values=HW_palette) +
-  theme_classic()+
-  theme(axis.title.x = element_text(face="bold", size=12),
-        axis.text.y  = element_text(size=12),
-        axis.text.x = element_text(size=11),
-        axis.title.y = element_text(face="bold",size=12),
-        legend.text=element_text(size=10),
-        strip.text.x = element_text(size = 12)) +
-  annotation_custom(rastfulmar, ymin = 145, ymax = 170, xmin = 2) +
-  annotation_custom(rastseaturtle, ymin = 170, ymax = 210, xmin = 1.7)
+  theme_classic(base_size = 20) +
+  annotation_custom(rastfulmar, ymin = 170, ymax = 200, xmin = 2) +
+  annotation_custom(rastseaturtle, ymin = 125, ymax = 170, xmin = 1.8)
 B_indSBST_gear 
 
 
-#MMPA category ranking distribution (C)
-MMPA_gear <- ggplot(filter(d1, MMPA_cat != "NA"),
+MMPA_gear <- ggplot(filter(data, MMPA_cat != "NA"),
                     aes(fct_relevel(MMPA_cat, "III", "II", "I"))) +
   geom_bar(aes(fill = GearType_general)) +
   ylab("Number of fisheries") +
   xlab("Marine Mammal Protection Act Category") +
   guides(fill=guide_legend(title="gear type")) +
   scale_fill_manual(values=HW_palette) +
-  theme_classic()+
-  theme(axis.title.x = element_text(face="bold", size=12),
-        axis.text.y  = element_text(size=12),
-        axis.text.x = element_text(size=11),
-        axis.title.y = element_text(face="bold",size=12),
-        legend.text=element_text(size=10),
-        strip.text.x = element_text(size = 12)) +
-  annotation_custom(rastpinniped, ymin = 230, ymax = 270, xmin = 2) +
-  annotation_custom(rastdolphin, ymin = 175, ymax = 215, xmin = 1.5)
+  theme_classic(base_size = 20) +
+  annotation_custom(rastpinniped, ymin = 235, ymax = 285, xmin = 2.25) +
+  annotation_custom(rastdolphin, ymin = 175, ymax = 220, xmin = 1.75)
 MMPA_gear
+
 
 Fig_2 <- ggarrange(BR_gear, B_indSBST_gear, MMPA_gear,
                    labels = c("A", "B", "C"), # THIS IS SO COOL!!
@@ -223,7 +204,7 @@ Fig_2 <- ggarrange(BR_gear, B_indSBST_gear, MMPA_gear,
                    ncol = 3, nrow = 1)
 Fig_2
 
-dev.copy2pdf(file="Figure_2.pdf", width=14, height=8)
+dev.copy2pdf(file="Fig_2.pdf", width=25, height=10)
 
 
 
@@ -231,14 +212,18 @@ dev.copy2pdf(file="Figure_2.pdf", width=14, height=8)
 #---Figure 3----
 
 # Get 50 and 75% quantile breaks for all fishery-years scores
-quantile(d1$mean_criteria, probs = c(0.5, 0.75), na.rm = TRUE)
+quantile(data$mean_criteria, probs = c(0.5, 0.75), na.rm = TRUE)
 
-# overall histogram of mean criteria score (A)
-mean_score_hist <- ggplot(d1, aes(mean_criteria)) +
+# overall histogram of mean criteria score
+mean_score_hist <- ggplot(data, aes(mean_criteria)) +
   geom_histogram(binwidth = 0.05, color="black", fill="gray80") +
   xlab("Relative Bycatch Index (RBI)") +
   ylim(-10,160) +
-  geom_vline(xintercept = c(0.08032846, 0.15452661), color = "blue", linetype = "dashed") +
+  # annotate("text", x = c(0.05, 0.3), y= -7, 
+  #          label = c("better performing", "worse performing")) +
+  #geom_density(alpha=.2, fill="#FF6666") +
+  #facet_wrap(.~GearType_general) +
+  geom_vline(xintercept = c(0.1235691, 0.2026025), color = "blue", linetype = "dashed") +
   theme_classic(base_size = 16)
 mean_score_hist 
 
@@ -247,7 +232,7 @@ col.pal.2 <- col.pal(2)
 
 
 #density plot by gear type (B)
-dens_by_GT <- ggplot(d1, aes(mean_criteria, fct_reorder(GearType_general, mean_criteria, .desc = TRUE), 
+dens_by_GT <- ggplot(data, aes(mean_criteria, fct_reorder(GearType_general, mean_criteria, .desc = TRUE), 
                              fill = ..x..)) +
   geom_density_ridges_gradient(scale = 0.85,
                                jittered_points = TRUE,
@@ -263,7 +248,7 @@ dens_by_GT
 
 
 #density plot by region (C)
-dens_by_region <- ggplot(d1, aes(mean_criteria, fct_reorder(Region, mean_criteria, .desc = TRUE), 
+dens_by_region <- ggplot(data, aes(mean_criteria, fct_reorder(Region, mean_criteria, .desc = TRUE), 
                                  fill = ..x..)) +
   geom_density_ridges_gradient(scale = 0.85,
                                jittered_points = TRUE,
@@ -280,7 +265,7 @@ dens_by_region + guides(size = FALSE)
 col.pal <- colorRampPalette(c("#053061" ,"#2166AC", "#4393C3",  "#D1E5F0" ,"#F7F7F7", "#FDDBC7", "#F4A582" ,"#D6604D" ,"#B2182B","#B2182B","#67001F","#67001F","#67001F"))
 
 #density plot by year (D)
-dens_by_year <- ggplot(d1, aes(mean_criteria, fct_relevel(Year, "2015", "2014", "2013", "2012", "2011", "2010"), 
+dens_by_year <- ggplot(data, aes(mean_criteria, fct_relevel(Year, "2015", "2014", "2013", "2012", "2011", "2010"), 
                                fill = ..x..)) +
   geom_density_ridges_gradient(scale = 0.85,
                                jittered_points = TRUE,
