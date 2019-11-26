@@ -62,13 +62,16 @@ data$criteria_se <- data$criteria_sd / sqrt(data$ncrit)
 #List the fisheries with scores in the top 10% 
 unique(data$Fishery_ShortName[data$mean_criteria>quantile(data$mean_criteria, probs = c(0.90), na.rm=T)[1]]) 
 
+
 #---Figure 1----
+
 bycatch <- data %>% 
   select(c(GearType_general,Region)) %>% group_by(GearType_general,Region) %>% 
   summarise(count=n()) %>% 
   spread(GearType_general,count) %>% 
   mutate(x=c(-117.5,-68,-105,-74,-130),y=c(19,36,19,23,45)) 
 bycatch[is.na(bycatch)]<-0
+
 
 crimes <- data.frame(state = tolower(rownames(USArrests)), USArrests)
 NE=c("maine","new hampshire","maryland","massachusetts","connecticut", "rhode island","new jersey", "new york", "west virginia","delaware","virginia")
@@ -90,13 +93,17 @@ master$Region[is.na(master$Region)]<-"Other"
 
 
 p <- ggplot(master, aes(map_id = state)) + 
-  geom_map(aes(fill=Region), map = fifty_states,show.legend = FALSE) +#scale_fill_manual("",values=c("AK"="#8da38e","NE"="#3c4d63","PI"="#4d543d","SE"="#557e83","WC"="#69494f","Other"="grey"),guide='none')+
-  expand_limits(x = fifty_states$long, y = fifty_states$lat) +
+  geom_map(aes(fill=Region), map = fifty_states,show.legend = FALSE) #+scale_fill_manual("",values=c("AK"="#8da38e","NE"="#3c4d63","PI"="#4d543d","SE"="#557e83","WC"="#69494f","Other"="grey"),guide='none')+
+expand_limits(x = fifty_states$long, y = fifty_states$lat) +
   coord_map()
-p=p+  geom_scatterpie(aes(x=x,y=y,r = 4,),data=bycatch,cols=colnames(bycatch)[2:10],color=NA)+coord_fixed() +
+# annotate("rect",xmin = -122, xmax = -113, ymin = 13.3, ymax = 23.5, alpha = .4,color="black",size=.2,fill="lightgrey")+
+# annotate("rect",xmin = -109.5, xmax = -100.5, ymin = 13.3, ymax = 23.5, alpha = .15,color="black",size=.2,fill="lightgrey")+
+# annotate("rect",xmin = -78.5, xmax = -69.5, ymin = 39.3, ymax = 49.5, alpha = .15,color="black",size=.2,fill="lightgrey")+
+# annotate("rect",xmin = -78.5, xmax = -69.5, ymin = 39.3, ymax = 49.5, alpha = .15,color="black",size=.2,fill="lightgrey")
+p=p+  geom_scatterpie(aes(x=x,y=y,r = 4,),data=bycatch,cols=colnames(bycatch)[2:9],color=NA)+coord_fixed() +
   theme(panel.background = element_blank())+ theme(panel.border = element_rect(colour = NA,fill=NA),legend.key.size = unit(.5,'lines'))+
   scale_fill_manual(breaks=c("dredge","gillnet","line","longline","pots and traps","purse seine","trawl","troll"),
-                    values=c("#7dac33","#c64f79","#93ccaf","#8e97ee","#3c4d63","grey","#4d543d","#59663e","#ffca33","#557e83","#c5703f","#4d304b","#69494f"))+
+                    values=c("AK"="#8da38e","dredge"="#7dac33","gillnet"="#c64f79","line"="#93ccaf","longline"="#8e97ee","NE"="#3c4d63","Other"="grey","PI"="#4d543d","pots and traps"="#59663e","purse seine"="#ffca33","SE"="#557e83","trawl"="#c5703f","troll"="#4d304b","WC"="#69494f"))+
   guides(fill=guide_legend(title="Gear types"))+theme(legend.position=c(.18,.5),legend.justification = c(.9,.9))+theme(legend.text=element_text(size=6),legend.title = element_text(size=6))+
   annotate("text",x=-117.5,y=14,label="Alaska",size=2,color="#555555")+annotate("text",x=-68,y=31,label="Northeast",size=2,color="#555555")+
   annotate("text",x=-105,y=14,label="Pacific Islands",size=2,color="#555555")+annotate("text",x=-74,y=18,label="Southeast",size=2,color="#555555")+
@@ -109,12 +116,15 @@ p=p+  geom_scatterpie(aes(x=x,y=y,r = 4,),data=bycatch,cols=colnames(bycatch)[2:
 p
 
 
-png("Fig1.png",width=5, height=5, units="in", res=400)
+png("Fig_1.png",width=5, height=5, units="in", res=400)
 par(ps=10)
 par(mar=c(1,1,1,1))
 par(cex=1)
 p
 dev.off()
+
+
+dev.copy2pdf(file="Fig_1.pdf", width=10, height=6)
 
 
 
