@@ -307,16 +307,16 @@ dev.copy2pdf(file="Figure_3.pdf", width=11, height=12)
 #First select fisheries with 6 years of data
 short <- as.data.frame(table(data$Fishery_ShortName))
 colnames(short) <- c("Fishery_ShortName","freq")
-d2 <- left_join(data[,c(1,2,6,40,43)],short,by="Fishery_ShortName")
+d2 <- left_join(data[,c(1,2,6,40,41)],short,by="Fishery_ShortName")
 col.pal <- colorRampPalette(c("#053061" ,"#2166AC", "#4393C3",  "#D1E5F0" , "#FDDBC7", "#F4A582" ,"#D6604D" ,"#B2182B","#B2182B","#67001F"))
 tiff('Figure4.tiff',res=300,units="in",width=11,height=14,bg="transparent")
 levelplot(d2$mean_criteria[d2$freq==6]~d2$Year[d2$freq==6]*d2$Fishery_ShortName[d2$freq==6],ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal,panel.abline(v=5))
 dev.off()
 
-#RBI standard error
-tiff('Figure_short_SE.tiff',res=300,units="in",width=11,height=14,bg="transparent")
+#RBI standard variance
+tiff('Figure_short_var.tiff',res=300,units="in",width=11,height=14,bg="transparent")
 col.pal.se <- colorRampPalette(c( "#440154FF", "#31688EFF" ,"#35B779FF", "#FDE725FF" ))
-levelplot(d2$criteria_se[d2$freq==6]~d2$Year[d2$freq==6]*d2$Fishery_ShortName[d2$freq==6],ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal.se,panel.abline(v=5))
+levelplot(d2$criteria_sd[d2$freq==6]^2~d2$Year[d2$freq==6]*d2$Fishery_ShortName[d2$freq==6],ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal.se,panel.abline(v=5))
 dev.off()
 
 #---Figure S1 ----
@@ -326,10 +326,10 @@ tiff('FigureS1.tiff',res=400,units="in",width=9,height=16,bg="transparent")
 levelplot(data$mean_criteria~data$Year*data$Fishery_ShortName, ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal)
 dev.off()
 
-#RBI standard error
-tiff('Figure_long_SE',res=400,units="in",width=9,height=16,bg="transparent")
+#RBI variance
+tiff('Figure_long_var',res=400,units="in",width=9,height=16,bg="transparent")
 col.pal.se <- colorRampPalette(c( "#440154FF", "#31688EFF" ,"#35B779FF", "#FDE725FF" ))
-levelplot(data$criteria_se~data$Year*data$Fishery_ShortName, ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal.se)
+levelplot(data$criteria_sd^2~data$Year*data$Fishery_ShortName, ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal.se)
 dev.off()
 
 #---Figure S2 ----
