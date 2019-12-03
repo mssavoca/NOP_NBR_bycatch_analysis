@@ -35,14 +35,11 @@ data$Fishery_Tier <- ifelse(data$Fishery_Tier==4,1,
 # Change combined gears to longline
 data <- data %>% mutate(GearType_general = replace(GearType_general, GearType_general == "combined gears", "longline"))
 
-#Change colname
-colnames(data)[15] <- "Discard_rate"
-
 #Normalise data betwen 0 and 1 
 range01 <- function(x, ...){(x - min(x, ...)) / (max(x, ...) - min(x, ...))}
-data$NORM_TotalBycatch_lbs <- range01(data$TotalBycatch_lbs,na.rm=T)
+data$NORM_TotalDiscards_lbs <- range01(data$TotalDiscards_lbs,na.rm=T)
 data$NORM_TotalBycatch_inds <- range01(data$TotalBycatch_inds,na.rm=T)
-data$NORM_Discard_rate <- range01(data$Discard_rate,na.rm=T)
+data$NORM_Discard_Rate <- range01(data$Discard_Rate,na.rm=T)
 data$NORM_ESA_num <- range01(data$ESA_num,na.rm=T)
 data$NORM_ESA_lbs <- range01(data$ESA_lbs,na.rm=T)
 data$NORM_ESA_birdturt <- range01(data$ESA_birdturt,na.rm=T)
@@ -335,19 +332,19 @@ levelplot(data$CV_mean^2~data$Year*data$Fishery_ShortName, ylab="",xlab="",main=
 dev.off()
 
 #---Figure S2 ----
-tiff('Figure_Supp_Criteria_Histograms_R1.tiff',res=300,units="in",width=10,height=7)
+tiff('~/PROJECTS/Savoca DOM/Manuscript/Figure_Supp_Criteria_Histograms_R1.tiff',res=300,units="in",width=10,height=7)
 par(mfrow=c(3,4),mar=c(4,2,2,2))
 hist(data$TotalBycatch_inds,main="",xlab="Seabirds and sea turtles bycaught",col="grey")
-hist(data$TotalBycatch_lbs,main="",xlab="Fish and invertebrates bycaught (lbs)",col="grey")
-hist(data$Discard_rate,main="",ylab="Frequency",xlab="Discard Rate",col="grey")
+hist(data$TotalDiscards_lbs,main="",xlab="Fish and invertebrates discarded (lbs)",col="grey")
+hist(data$Discard_Rate,main="",ylab="Frequency",xlab="Discard Rate",col="grey")
 hist(data$ESA_num,main="",xlab="ESA listed species bycaught",col="grey")
-hist(data$ESA_lbs,main="",xlab="ESA listed fish and invertebrates bycaught (lbs)",col="grey")
+hist(data$ESA_lbs,main="",xlab="ESA listed fish and invertebrates discarded (lbs)",col="grey")
 hist(data$ESA_birdturt,main="",xlab="ESA listed seabirds and sea turtles bycaught",col="grey")
 hist(data$IUCN_num,main="",xlab="IUCN listed species bycaught",col="grey")
-hist(data$IUCN_lbs,main="",ylab="Frequency",xlab="IUCN listed fish and invertebrates bycaught (lbs)",col="grey")
+hist(data$IUCN_lbs,main="",ylab="Frequency",xlab="IUCN listed fish and invertebrates discarded (lbs)",col="grey")
 hist(data$IUCN_birdturt,main="",xlab="IUCN listed seabirds and sea turtles bycaught",col="grey")
 hist(data$MMPA,main="",xlab="MMPA Category Ranking (inverted)",col="grey")
-hist(data$Fishery_Tier,main="",xlab="Tier Classification System",col="grey")
+hist(data$Fishery_Tier,main="",xlab="Tier Classification System (inverted)",col="grey")
 hist(data$CV_mean,main="",xlab="Mean Coefficient of Variation",col="grey")
 dev.off()
 
@@ -384,26 +381,26 @@ for (i in 1:1000){
   sens_anal[counter:count2,13] <- score
   counter= counter + 462
 }
-colnames(sens_anal) <- c("TotalBycatch_lbs", "TotalBycatch_inds","Discard_rate",
-                         "ESA_num","ESA_lbs","ESA_birdturt","IUCN_num","IUCN_lbs",
+colnames(sens_anal) <- c("TotalDiscards_lbs", "TotalBycatch_inds","Discard_rate",
+                         "ESA_num","ESA_discard_lbs","ESA_birdturt","IUCN_num","IUCN_discard_lbs",
                          "IUCN_birdturt","MMPA","Tier","CV",'Mean_Score')
 #Standardise output
-sens_anal$TotalBycatch_lbs <- (sens_anal$TotalBycatch_lbs - ((max(sens_anal$TotalBycatch_lbs,na.rm=T) + min(sens_anal$TotalBycatch_lbs,na.rm=T)) / 2)) / ((max(sens_anal$TotalBycatch_lbs,na.rm=T) - min(sens_anal$TotalBycatch_lbs,na.rm=T)) / 2)
+sens_anal$TotalDiscards_lbs <- (sens_anal$TotalDiscards_lbs - ((max(sens_anal$TotalDiscards_lbs,na.rm=T) + min(sens_anal$TotalDiscards_lbs,na.rm=T)) / 2)) / ((max(sens_anal$TotalDiscards_lbs,na.rm=T) - min(sens_anal$TotalDiscards_lbs,na.rm=T)) / 2)
 sens_anal$TotalBycatch_inds <- (sens_anal$TotalBycatch_inds - ((max(sens_anal$TotalBycatch_inds,na.rm=T) + min(sens_anal$TotalBycatch_inds,na.rm=T)) / 2)) / ((max(sens_anal$TotalBycatch_inds,na.rm=T) - min(sens_anal$TotalBycatch_inds,na.rm=T)) / 2)
 sens_anal$Discard_rate <- (sens_anal$Discard_rate - ((max(sens_anal$Discard_rate,na.rm=T) + min(sens_anal$Discard_rate,na.rm=T)) / 2)) / ((max(sens_anal$Discard_rate,na.rm=T) - min(sens_anal$Discard_rate,na.rm=T)) / 2)
 sens_anal$ESA_species <- (sens_anal$ESA_num - ((max(sens_anal$ESA_num,na.rm=T) + min(sens_anal$ESA_num,na.rm=T)) / 2)) / ((max(sens_anal$ESA_num,na.rm=T) - min(sens_anal$ESA_num,na.rm=T)) / 2)
-sens_anal$ESA_fish_lbs <- (sens_anal$ESA_lbs - ((max(sens_anal$ESA_lbs,na.rm=T) + min(sens_anal$ESA_lbs,na.rm=T)) / 2)) / ((max(sens_anal$ESA_lbs,na.rm=T) - min(sens_anal$ESA_lbs,na.rm=T)) / 2)
+sens_anal$ESA_discard_lbs <- (sens_anal$ESA_discard_lbs - ((max(sens_anal$ESA_discard_lbs,na.rm=T) + min(sens_anal$ESA_discard_lbs,na.rm=T)) / 2)) / ((max(sens_anal$ESA_discard_lbs,na.rm=T) - min(sens_anal$ESA_discard_lbs,na.rm=T)) / 2)
 sens_anal$ESA_birdturtle <- (sens_anal$ESA_birdturt - ((max(sens_anal$ESA_birdturt,na.rm=T) + min(sens_anal$ESA_birdturt,na.rm=T)) / 2)) / ((max(sens_anal$ESA_birdturt,na.rm=T) - min(sens_anal$ESA_birdturt,na.rm=T)) / 2)
 sens_anal$IUCN_species <- (sens_anal$IUCN_num - ((max(sens_anal$IUCN_num,na.rm=T) + min(sens_anal$IUCN_num,na.rm=T)) / 2)) / ((max(sens_anal$IUCN_num,na.rm=T) - min(sens_anal$IUCN_num,na.rm=T)) / 2)
-sens_anal$IUCN_fish_lbs <- (sens_anal$IUCN_lbs - ((max(sens_anal$IUCN_lbs,na.rm=T) + min(sens_anal$IUCN_lbs,na.rm=T)) / 2)) / ((max(sens_anal$IUCN_lbs,na.rm=T) - min(sens_anal$IUCN_lbs,na.rm=T)) / 2)
+sens_anal$IUCN_discard_lbs <- (sens_anal$IUCN_discard_lbs - ((max(sens_anal$IUCN_discard_lbs,na.rm=T) + min(sens_anal$IUCN_discard_lbs,na.rm=T)) / 2)) / ((max(sens_anal$IUCN_discard_lbs,na.rm=T) - min(sens_anal$IUCN_discard_lbs,na.rm=T)) / 2)
 sens_anal$IUCN_birdturtle <- (sens_anal$IUCN_birdturt - ((max(sens_anal$IUCN_birdturt,na.rm=T) + min(sens_anal$IUCN_birdturt,na.rm=T)) / 2)) / ((max(sens_anal$IUCN_birdturt,na.rm=T) - min(sens_anal$IUCN_birdturt,na.rm=T)) / 2)
 sens_anal$MMPA <- (sens_anal$MMPA - ((max(sens_anal$MMPA,na.rm=T) + min(sens_anal$MMPA,na.rm=T)) / 2)) / ((max(sens_anal$MMPA,na.rm=T) - min(sens_anal$MMPA,na.rm=T)) / 2)
 sens_anal$Tier <- (sens_anal$Tier - ((max(sens_anal$Tier,na.rm=T) + min(sens_anal$Tier,na.rm=T)) / 2)) / ((max(sens_anal$Tier,na.rm=T) - min(sens_anal$Tier,na.rm=T)) / 2)
 sens_anal$CV <- (sens_anal$CV - ((max(sens_anal$CV,na.rm=T) + min(sens_anal$CV,na.rm=T)) / 2)) / ((max(sens_anal$CV,na.rm=T) - min(sens_anal$CV,na.rm=T)) / 2)
 
 #Build linear model with output
-sens_m1 <- lm(log(Mean_Score) ~ TotalBycatch_lbs + TotalBycatch_inds +Discard_rate + 
-                ESA_species + ESA_fish_lbs + ESA_birdturtle + IUCN_species + IUCN_fish_lbs
+sens_m1 <- lm(log(Mean_Score) ~ TotalDiscards_lbs + TotalBycatch_inds +Discard_rate + 
+                ESA_species + ESA_discard_lbs + ESA_birdturtle + IUCN_species + IUCN_discard_lbs
               + IUCN_birdturtle + MMPA + Tier + CV,
               data = sens_anal)
 #Plot Figure S3: note that random permutations above may change results slightly
