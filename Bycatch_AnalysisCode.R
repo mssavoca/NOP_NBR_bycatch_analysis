@@ -24,43 +24,44 @@ library(SDMTools)
 
 #------LOAD DATA-------
 #Data can be found on github, contains bycatch summary data for all fisheries and years
-data <- read.csv('SummaryData_Nov2019_AllFisheryYears.csv', header=T) 
-
-#Invert the Tier scores
-data$Fishery_Tier <- ifelse(data$Fishery_Tier==4,1,
-                            ifelse(data$Fishery_Tier==3,2,
-                                   ifelse(data$Fishery_Tier==2,3,
-                                          ifelse(data$Fishery_Tier==1,4,NA))))
+data <- read.csv('SummaryData_December2019_AllFisheryYears.csv', header=T) 
 
 # Change combined gears to longline
 data <- data %>% mutate(GearType_general = replace(GearType_general, GearType_general == "combined gears", "longline"))
 
 #Normalise data betwen 0 and 1 
 range01 <- function(x, ...){(x - min(x, ...)) / (max(x, ...) - min(x, ...))}
-data$NORM_TotalDiscards_lbs <- range01(data$TotalDiscards_lbs,na.rm=T)
-data$NORM_TotalBycatch_inds <- range01(data$TotalBycatch_inds,na.rm=T)
+data$NORM_TotalDiscards_lbs <- range01(data$TotalDiscards_FI_lbs,na.rm=T)
+data$NORM_TotalDiscards_inds <- range01(data$TotalDiscards_FI_inds,na.rm=T)
+data$NORM_IUCN_lbs <- range01(data$IUCN_FI_discards_lbs,na.rm=T)
+data$NORM_IUCN_inds <- range01(data$IUCN_FI_discards_inds,na.rm=T)
+data$NORM_ESA_inds <- range01(data$ESA_FI_discards_inds,na.rm=T)
+data$NORM_ESA_lbs <- range01(data$ESA_FI_discards_lbs,na.rm=T)
+data$NORM_TotalBycatch_inds <- range01(data$TotalBycatch_SS_inds,na.rm=T)
 data$NORM_Discard_Rate <- range01(data$Discard_Rate,na.rm=T)
-data$NORM_ESA_num <- range01(data$ESA_num,na.rm=T)
-data$NORM_ESA_lbs <- range01(data$ESA_lbs,na.rm=T)
+data$NORM_ESA_num <- range01(data$ESA_sp_num,na.rm=T)
 data$NORM_ESA_birdturt <- range01(data$ESA_birdturt,na.rm=T)
-data$NORM_IUCN_num <- range01(data$IUCN_num,na.rm=T)
-data$NORM_IUCN_lbs <- range01(data$IUCN_lbs,na.rm=T)
+data$NORM_IUCN_num <- range01(data$IUCN_sp_num,na.rm=T)
 data$NORM_IUCN_birdturt <- range01(data$IUCN_birdturt,na.rm=T)
 data$NORM_MMPA <- range01(data$MMPA,na.rm=T)
 data$NORM_Tier <- range01(data$Fishery_Tier,na.rm=T)
 data$NORM_CV <- range01(data$CV_mean,na.rm=T)
 
+#Combine normalised discards with biomass and individual units
+data$NORM_TotalDiscards_Combined <- ifelse(is.na(data$NORM_TotalDiscards_lbs),data$NORM_TotalDiscards_inds,data$NORM_TotalDiscards_lbs)
+data$NORM_ESA_Discards_Combined <- ifelse(is.na(data$NORM_ESA_lbs),data$NORM_ESA_inds,data$NORM_ESA_lbs)
+data$NORM_IUCN_Discards_Combined <- ifelse(is.na(data$NORM_IUCN_lbs),data$NORM_IUCN_inds,data$NORM_IUCN_lbs)
+
 #-----RELATIVE BYCATCH INDEX------
 #Calculate RBI for each fishery in each year
 #Weighted mean, with MMPA category receiving double weighting
-data$mean_criteria <- apply(data[,28:39],1,function(x) wt.mean(x,wt=c(rep(1,9),2,1,1)))
-data$criteria_sd <- apply(data[,28:39],1,function(x) wt.sd(x,wt=c(rep(1,9),2,1,1)))
-data$ncrit <- as.numeric(apply(data[,28:39],1,function(x) summary(is.na(x))[2]))
+data$mean_criteria <- apply(data[,37:48],1,function(x) wt.mean(x,wt=c(rep(1,6),2,1,1,1,1,1)))
+data$criteria_sd <- apply(data[,37:48],1,function(x) wt.sd(x,wt=c(rep(1,6),2,1,1,1,1,1)))
+data$ncrit <- as.numeric(apply(data[,37:48],1,function(x) summary(is.na(x))[2]))
 data$criteria_se <- data$criteria_sd / sqrt(data$ncrit)
 
 #List the fisheries with scores in the top 10% 
 unique(data$Fishery_ShortName[data$mean_criteria>quantile(data$mean_criteria, probs = c(0.90), na.rm=T)[1]]) 
-
 
 #---Figure 1----
 
@@ -306,9 +307,9 @@ dev.copy2pdf(file="Figure_3.pdf", width=11, height=12)
 #First select fisheries with 6 years of data
 short <- as.data.frame(table(data$Fishery_ShortName))
 colnames(short) <- c("Fishery_ShortName","freq")
-d2 <- left_join(data[,c(1,2,6,40,41)],short,by="Fishery_ShortName")
+d2 <- left_join(data[,c(1,2,6,49,50,51)],short,by="Fishery_ShortName")
 col.pal <- colorRampPalette(c("#053061" ,"#2166AC", "#4393C3",  "#D1E5F0" , "#FDDBC7", "#F4A582" ,"#D6604D" ,"#B2182B","#B2182B","#67001F"))
-tiff('Figure4.tiff',res=300,units="in",width=11,height=14,bg="transparent")
+tiff('Figure4_R1.tiff',res=300,units="in",width=11,height=14,bg="transparent")
 levelplot(d2$mean_criteria[d2$freq==6]~d2$Year[d2$freq==6]*d2$Fishery_ShortName[d2$freq==6],ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal,panel.abline(v=5))
 dev.off()
 
@@ -318,39 +319,51 @@ col.pal.se <- colorRampPalette(c( "#440154FF", "#31688EFF" ,"#35B779FF", "#FDE72
 levelplot(d2$criteria_sd[d2$freq==6]^2~d2$Year[d2$freq==6]*d2$Fishery_ShortName[d2$freq==6],ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal.se,panel.abline(v=5))
 dev.off()
 
+#RBI number of criteria
+tiff('Figure_short_ncriteria.tiff',res=300,units="in",width=11,height=14,bg="transparent")
+col.pal.se <- colorRampPalette(c("#FDE725FF", "#35B779FF","#31688EFF","#440154FF"))
+levelplot(d2$ncrit[d2$freq==6]~d2$Year[d2$freq==6]*d2$Fishery_ShortName[d2$freq==6],ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal.se,panel.abline(v=5))
+dev.off()
+
 #---Figure S1 ----
 #RBI
 col.pal <- colorRampPalette(c("#053061" ,"#2166AC", "#4393C3",  "#D1E5F0" , "#FDDBC7", "#F4A582" ,"#D6604D" ,"#B2182B","#B2182B","#67001F"))
-tiff('FigureS1.tiff',res=400,units="in",width=9,height=16,bg="transparent")
+tiff('FigureS1_R1.tiff',res=400,units="in",width=9,height=16,bg="transparent")
 levelplot(data$mean_criteria~data$Year*data$Fishery_ShortName, ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal)
 dev.off()
 
 #RBI variance
-tiff('Figure_long_var',res=400,units="in",width=9,height=16,bg="transparent")
+tiff('Figure_long_var.tiff',res=400,units="in",width=9,height=16,bg="transparent")
 col.pal.se <- colorRampPalette(c( "#440154FF", "#31688EFF" ,"#35B779FF", "#FDE725FF" ))
-levelplot(data$CV_mean^2~data$Year*data$Fishery_ShortName, ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal.se)
+levelplot(data$criteria_sd^2~data$Year*data$Fishery_ShortName, ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal.se)
+dev.off()
+
+#RBI number of criteria
+tiff('Figure_long_ncrit.tiff',res=400,units="in",width=9,height=16,bg="transparent")
+col.pal.se <- colorRampPalette(c("#FDE725FF", "#35B779FF","#31688EFF","#440154FF"))
+levelplot(data$ncrit~data$Year*data$Fishery_ShortName, ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal.se)
 dev.off()
 
 #---Figure S2 ----
-tiff('~/PROJECTS/Savoca DOM/Manuscript/Figure_Supp_Criteria_Histograms_R1.tiff',res=300,units="in",width=10,height=7)
+tiff('Figure_Supp_Criteria_Histograms_R1.tiff',res=300,units="in",width=10,height=7)
 par(mfrow=c(3,4),mar=c(4,2,2,2))
-hist(data$TotalBycatch_inds,main="",xlab="Seabirds and sea turtles bycaught",col="grey")
-hist(data$TotalDiscards_lbs,main="",xlab="Fish and invertebrates discarded (lbs)",col="grey")
-hist(data$Discard_Rate,main="",ylab="Frequency",xlab="Discard Rate",col="grey")
-hist(data$ESA_num,main="",xlab="ESA listed species bycaught",col="grey")
-hist(data$ESA_lbs,main="",xlab="ESA listed fish and invertebrates discarded (lbs)",col="grey")
-hist(data$ESA_birdturt,main="",xlab="ESA listed seabirds and sea turtles bycaught",col="grey")
-hist(data$IUCN_num,main="",xlab="IUCN listed species bycaught",col="grey")
-hist(data$IUCN_lbs,main="",ylab="Frequency",xlab="IUCN listed fish and invertebrates discarded (lbs)",col="grey")
-hist(data$IUCN_birdturt,main="",xlab="IUCN listed seabirds and sea turtles bycaught",col="grey")
-hist(data$MMPA,main="",xlab="MMPA Category Ranking (inverted)",col="grey")
-hist(data$Fishery_Tier,main="",xlab="Tier Classification System (inverted)",col="grey")
-hist(data$CV_mean,main="",xlab="Mean Coefficient of Variation",col="grey")
+hist(data$NORM_TotalBycatch_inds,main="",xlab="Seabirds and sea turtles bycaught",col="grey")
+hist(data$NORM_TotalDiscards_Combined,main="",xlab="Fish and invertebrates discarded",col="grey")
+hist(data$NORM_Discard_Rate,main="",ylab="Frequency",xlab="Discard Rate",col="grey")
+hist(data$NORM_ESA_num,main="",xlab="ESA listed species bycaught",col="grey")
+hist(data$NORM_ESA_Discards_Combined,main="",xlab="ESA listed fish and invertebrates discarded",col="grey")
+hist(data$NORM_ESA_birdturt,main="",xlab="ESA listed seabirds and sea turtles bycaught",col="grey")
+hist(data$NORM_IUCN_num,main="",xlab="IUCN listed species bycaught",col="grey")
+hist(data$NORM_IUCN_Discards_Combined,main="",ylab="Frequency",xlab="IUCN listed fish and invertebrates discarded",col="grey")
+hist(data$NORM_IUCN_birdturt,main="",xlab="IUCN listed seabirds and sea turtles bycaught",col="grey")
+hist(data$NORM_MMPA,main="",xlab="MMPA Category Ranking (inverted)",col="grey")
+hist(data$NORM_Tier,main="",xlab="Tier Classification System (inverted)",col="grey")
+hist(data$NORM_CV,main="",xlab="Mean Coefficient of Variation",col="grey")
 dev.off()
 
 tiff('Figure_Overfished_Overfishing.tiff',res=200,units="in",width=7,height=4)
 par(mfrow=c(1,2))
-hist(data$Overfishing_Fm_numeric,main="",xlab="Number of species overfished",col="grey")
+hist(data$Overfished_Fm_numeric,main="",xlab="Number of species overfished",col="grey")
 hist(data$Overfishing_Bt_numeric,main="",xlab="Number of species subject to overfishing",col="grey")
 dev.off()
 
@@ -359,48 +372,49 @@ dev.off()
 #Sensitivity analysis: find out the relative impact of each criteria on the RBI 
 #This works by randomly changing the criteria value to be itself, or +/- 10%
 #1000 iterations
-sens_anal <- as.data.frame(matrix(NA,nrow=462000,ncol=13)) 
+sens_anal <- as.data.frame(matrix(NA,nrow=456000,ncol=13)) 
 counter=1
 for (i in 1:1000){
-  c1 <- data[,28] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,28]
-  c2 <- data[,29] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,29]
-  c3 <- data[,30] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,30]
-  c4 <- data[,31] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,31]
-  c5 <- data[,32] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,32]
-  c6 <- data[,33] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,33]
-  c7 <- data[,34] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,34]
-  c8 <- data[,35] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,35]
-  c9 <- data[,36] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,36]
-  c10 <- data[,37] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,37]
-  c11 <- data[,38] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,38]
-  c12 <- data[,39] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,39]
+  c1 <- data[,37] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,37]
+  c2 <- data[,38] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,38]
+  c3 <- data[,39] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,39]
+  c4 <- data[,40] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,40]
+  c5 <- data[,41] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,41]
+  c6 <- data[,42] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,42]
+  c7 <- data[,43] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,43]
+  c8 <- data[,44] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,44]
+  c9 <- data[,45] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,45]
+  c10 <- data[,46] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,46]
+  c11 <- data[,47] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,47]
+  c12 <- data[,48] + sample(c(1,-0.1,0.1),size=1,replace=TRUE)*data[,48]
   score <- rowMeans(cbind(c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12),dims=1)
   
-  count2 = counter+461
+  count2 = counter+455
   sens_anal[counter:count2,1:12] <- cbind(c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12)
   sens_anal[counter:count2,13] <- score
-  counter= counter + 462
+  counter= counter + 456
 }
-colnames(sens_anal) <- c("TotalDiscards_lbs", "TotalBycatch_inds","Discard_rate",
-                         "ESA_num","ESA_discard_lbs","ESA_birdturt","IUCN_num","IUCN_discard_lbs",
-                         "IUCN_birdturt","MMPA","Tier","CV",'Mean_Score')
+colnames(sens_anal) <- c("TotalBycatch_inds","Discard_rate",
+                         "ESA_num","ESA_birdturt","IUCN_num",
+                         "IUCN_birdturt","MMPA","Tier","CV",
+                         "TotalDiscards","ESA_discards","IUCN_discards", 'Mean_Score')
 #Standardise output
-sens_anal$TotalDiscards_lbs <- (sens_anal$TotalDiscards_lbs - ((max(sens_anal$TotalDiscards_lbs,na.rm=T) + min(sens_anal$TotalDiscards_lbs,na.rm=T)) / 2)) / ((max(sens_anal$TotalDiscards_lbs,na.rm=T) - min(sens_anal$TotalDiscards_lbs,na.rm=T)) / 2)
+sens_anal$TotalDiscards <- (sens_anal$TotalDiscards - ((max(sens_anal$TotalDiscards,na.rm=T) + min(sens_anal$TotalDiscards,na.rm=T)) / 2)) / ((max(sens_anal$TotalDiscards,na.rm=T) - min(sens_anal$TotalDiscards,na.rm=T)) / 2)
 sens_anal$TotalBycatch_inds <- (sens_anal$TotalBycatch_inds - ((max(sens_anal$TotalBycatch_inds,na.rm=T) + min(sens_anal$TotalBycatch_inds,na.rm=T)) / 2)) / ((max(sens_anal$TotalBycatch_inds,na.rm=T) - min(sens_anal$TotalBycatch_inds,na.rm=T)) / 2)
 sens_anal$Discard_rate <- (sens_anal$Discard_rate - ((max(sens_anal$Discard_rate,na.rm=T) + min(sens_anal$Discard_rate,na.rm=T)) / 2)) / ((max(sens_anal$Discard_rate,na.rm=T) - min(sens_anal$Discard_rate,na.rm=T)) / 2)
 sens_anal$ESA_species <- (sens_anal$ESA_num - ((max(sens_anal$ESA_num,na.rm=T) + min(sens_anal$ESA_num,na.rm=T)) / 2)) / ((max(sens_anal$ESA_num,na.rm=T) - min(sens_anal$ESA_num,na.rm=T)) / 2)
-sens_anal$ESA_discard_lbs <- (sens_anal$ESA_discard_lbs - ((max(sens_anal$ESA_discard_lbs,na.rm=T) + min(sens_anal$ESA_discard_lbs,na.rm=T)) / 2)) / ((max(sens_anal$ESA_discard_lbs,na.rm=T) - min(sens_anal$ESA_discard_lbs,na.rm=T)) / 2)
+sens_anal$ESA_discards <- (sens_anal$ESA_discards - ((max(sens_anal$ESA_discards,na.rm=T) + min(sens_anal$ESA_discards,na.rm=T)) / 2)) / ((max(sens_anal$ESA_discards,na.rm=T) - min(sens_anal$ESA_discards,na.rm=T)) / 2)
 sens_anal$ESA_birdturtle <- (sens_anal$ESA_birdturt - ((max(sens_anal$ESA_birdturt,na.rm=T) + min(sens_anal$ESA_birdturt,na.rm=T)) / 2)) / ((max(sens_anal$ESA_birdturt,na.rm=T) - min(sens_anal$ESA_birdturt,na.rm=T)) / 2)
 sens_anal$IUCN_species <- (sens_anal$IUCN_num - ((max(sens_anal$IUCN_num,na.rm=T) + min(sens_anal$IUCN_num,na.rm=T)) / 2)) / ((max(sens_anal$IUCN_num,na.rm=T) - min(sens_anal$IUCN_num,na.rm=T)) / 2)
-sens_anal$IUCN_discard_lbs <- (sens_anal$IUCN_discard_lbs - ((max(sens_anal$IUCN_discard_lbs,na.rm=T) + min(sens_anal$IUCN_discard_lbs,na.rm=T)) / 2)) / ((max(sens_anal$IUCN_discard_lbs,na.rm=T) - min(sens_anal$IUCN_discard_lbs,na.rm=T)) / 2)
+sens_anal$IUCN_discards <- (sens_anal$IUCN_discards - ((max(sens_anal$IUCN_discards,na.rm=T) + min(sens_anal$IUCN_discards,na.rm=T)) / 2)) / ((max(sens_anal$IUCN_discards,na.rm=T) - min(sens_anal$IUCN_discards,na.rm=T)) / 2)
 sens_anal$IUCN_birdturtle <- (sens_anal$IUCN_birdturt - ((max(sens_anal$IUCN_birdturt,na.rm=T) + min(sens_anal$IUCN_birdturt,na.rm=T)) / 2)) / ((max(sens_anal$IUCN_birdturt,na.rm=T) - min(sens_anal$IUCN_birdturt,na.rm=T)) / 2)
 sens_anal$MMPA <- (sens_anal$MMPA - ((max(sens_anal$MMPA,na.rm=T) + min(sens_anal$MMPA,na.rm=T)) / 2)) / ((max(sens_anal$MMPA,na.rm=T) - min(sens_anal$MMPA,na.rm=T)) / 2)
 sens_anal$Tier <- (sens_anal$Tier - ((max(sens_anal$Tier,na.rm=T) + min(sens_anal$Tier,na.rm=T)) / 2)) / ((max(sens_anal$Tier,na.rm=T) - min(sens_anal$Tier,na.rm=T)) / 2)
 sens_anal$CV <- (sens_anal$CV - ((max(sens_anal$CV,na.rm=T) + min(sens_anal$CV,na.rm=T)) / 2)) / ((max(sens_anal$CV,na.rm=T) - min(sens_anal$CV,na.rm=T)) / 2)
 
 #Build linear model with output
-sens_m1 <- lm(log(Mean_Score) ~ TotalDiscards_lbs + TotalBycatch_inds +Discard_rate + 
-                ESA_species + ESA_discard_lbs + ESA_birdturtle + IUCN_species + IUCN_discard_lbs
+sens_m1 <- lm(log(Mean_Score) ~ TotalDiscards + TotalBycatch_inds +Discard_rate + 
+                ESA_species + ESA_discards + ESA_birdturtle + IUCN_species + IUCN_discards
               + IUCN_birdturtle + MMPA + Tier + CV,
               data = sens_anal)
 #Plot Figure S3: note that random permutations above may change results slightly
