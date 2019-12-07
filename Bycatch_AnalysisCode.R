@@ -152,14 +152,14 @@ rastalbatross <- grid::rasterGrob(imgalbatross, interpolate = T)
 
 
 # identifying quantiles for break points
-quantile(data$Bycatch_ratio, probs = c(0.5, 0.75), na.rm = TRUE)
+quantile(data$Discard_Rate, probs = c(0.5, 0.75), na.rm = TRUE)
 quantile(data$TotalBycatch_inds, probs = c(0.5, 0.75), na.rm = TRUE)
 
 #adding columms changing continuous values to discrete for figure
 data <- data %>% mutate(
-  BR_ratio_cat = cut(Bycatch_ratio, breaks=c(-Inf, 0.1480491, 0.3037714, Inf), 
+  BR_ratio_cat = cut(Discard_Rate, breaks=c(-Inf, 0.1531961, 0.3037714, Inf), 
                      labels=c("low (<0.15)","moderate (0.15-0.30)","high (>0.30)")),
-  TotalBycatch_SBST_cat = cut(TotalBycatch_inds, breaks=c(-Inf, 0, 50.5, Inf),  # 26.875
+  TotalBycatch_SBST_cat = cut(TotalBycatch_SS_inds, breaks=c(-Inf, 0, 50.5, Inf),  # 26.875
                               labels=c("none","moderate (1-50)","high (>50)")),
   MMPA_cat = case_when(MMPA == 1 ~ "III",
                        MMPA == 2 ~ "II",
@@ -172,7 +172,7 @@ BR_gear <- ggplot(filter(data, BR_ratio_cat != "NA"),
                   aes(BR_ratio_cat)) +
   geom_bar(aes(fill = GearType_general)) +
   ylab("Number of fisheries") +
-  xlab("Bycatch ratio of fish and invertebrates") +
+  xlab("Discard rate of fish and invertebrates") +
   guides(fill=guide_legend(title="gear type")) +
   scale_fill_manual(values=HW_palette) +
   theme_classic(base_size = 20) +
