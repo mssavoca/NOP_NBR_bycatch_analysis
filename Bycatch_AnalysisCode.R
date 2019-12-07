@@ -322,7 +322,7 @@ dev.off()
 #RBI number of criteria
 tiff('Figure_short_ncriteria.tiff',res=300,units="in",width=11,height=14,bg="transparent")
 col.pal.se <- colorRampPalette(c("#FDE725FF", "#35B779FF","#31688EFF","#440154FF"))
-levelplot(d2$ncrit[d2$freq==6]~d2$Year[d2$freq==6]*d2$Fishery_ShortName[d2$freq==6],ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal.se,panel.abline(v=5))
+levelplot(d2$ncrit[d2$freq==6]~d2$Year[d2$freq==6]*d2$Fishery_ShortName[d2$freq==6],ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal,panel.abline(v=5))
 dev.off()
 
 #---Figure S1 ----
