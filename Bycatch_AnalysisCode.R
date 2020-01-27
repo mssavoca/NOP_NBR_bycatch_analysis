@@ -309,27 +309,29 @@ short <- as.data.frame(table(data$Fishery_ShortName))
 colnames(short) <- c("Fishery_ShortName","freq")
 d2 <- left_join(data[,c(1,2,6,49,50,51)],short,by="Fishery_ShortName")
 col.pal <- colorRampPalette(c("#053061" ,"#2166AC", "#4393C3",  "#D1E5F0" , "#FDDBC7", "#F4A582" ,"#D6604D" ,"#B2182B","#B2182B","#67001F"))
-tiff('Figure4_R1.tiff',res=300,units="in",width=11,height=14,bg="transparent")
-levelplot(d2$mean_criteria[d2$freq==6]~d2$Year[d2$freq==6]*d2$Fishery_ShortName[d2$freq==6],ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal,panel.abline(v=5))
+tiff('Figure4_R1.tiff',res=300,units="in",width=9,height=13,bg="transparent")
+levelplot(d2$mean_criteria[d2$freq==6]~d2$Year[d2$freq==6]*d2$Fishery_ShortName[d2$freq==6],ylab="",
+          xlab="",main="",scales=list(cex=1, tck=c(1,0)),
+          col.regions=col.pal,panel.abline(v=5), colorkey=list(space="top"))
 dev.off()
 
 #RBI standard variance
-tiff('Figure_short_var.tiff',res=300,units="in",width=11,height=14,bg="transparent")
+tiff('Figure_short_var.tiff',res=300,units="in",width=9,height=13,bg="transparent")
 col.pal.se <- colorRampPalette(c( "#440154FF", "#31688EFF" ,"#35B779FF", "#FDE725FF" ))
-levelplot(d2$criteria_sd[d2$freq==6]^2~d2$Year[d2$freq==6]*d2$Fishery_ShortName[d2$freq==6],ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal.se,panel.abline(v=5))
+levelplot(d2$criteria_sd[d2$freq==6]^2~d2$Year[d2$freq==6]*d2$Fishery_ShortName[d2$freq==6],ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal.se,panel.abline(v=5),colorkey=list(space="top"))
 dev.off()
 
 #RBI number of criteria
-tiff('Figure_short_ncriteria.tiff',res=300,units="in",width=11,height=14,bg="transparent")
+tiff('Figure_short_ncriteria.tiff',res=300,units="in",width=9,height=13,bg="transparent")
 col.pal.se <- colorRampPalette(c("#FDE725FF", "#35B779FF","#31688EFF","#440154FF"))
-levelplot(d2$ncrit[d2$freq==6]~d2$Year[d2$freq==6]*d2$Fishery_ShortName[d2$freq==6],ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal,panel.abline(v=5))
+levelplot(d2$ncrit[d2$freq==6]~d2$Year[d2$freq==6]*d2$Fishery_ShortName[d2$freq==6],ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal,panel.abline(v=5),colorkey=list(space="top"))
 dev.off()
 
 #---Figure S1 ----
 #RBI
 col.pal <- colorRampPalette(c("#053061" ,"#2166AC", "#4393C3",  "#D1E5F0" , "#FDDBC7", "#F4A582" ,"#D6604D" ,"#B2182B","#B2182B","#67001F"))
 tiff('FigureS1_R1.tiff',res=400,units="in",width=9,height=16,bg="transparent")
-levelplot(data$mean_criteria~data$Year*data$Fishery_ShortName, ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal)
+levelplot(data$mean_criteria~data$Year*data$Fishery_ShortName, ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal, colorkey=list(space="top"))
 dev.off()
 
 #RBI variance
