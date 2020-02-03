@@ -337,7 +337,7 @@ dev.off()
 #RBI variance
 tiff('Figure_long_var.tiff',res=400,units="in",width=9,height=16,bg="transparent")
 col.pal.se <- colorRampPalette(c( "#440154FF", "#31688EFF" ,"#35B779FF", "#FDE725FF" ))
-levelplot(data$criteria_sd^2~data$Year*data$Fishery_ShortName, ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal.se)
+levelplot(data$criteria_sd^2~data$Year*data$Fishery_ShortName, ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal.se,colorkey=list(space="top"))
 dev.off()
 
 #RBI number of criteria
@@ -419,6 +419,7 @@ sens_m1 <- lm(log(Mean_Score) ~ TotalDiscards + TotalBycatch_inds +Discard_rate 
                 ESA_species + ESA_discards + ESA_birdturtle + IUCN_species + IUCN_discards
               + IUCN_birdturtle + MMPA + Tier + CV,
               data = sens_anal)
+
 #Plot Figure S3: note that random permutations above may change results slightly
 tiff('Figure_Supp_SensitivityAnalysis.tiff',res=300,units="in",width=10,height=5)
 par(mar=c(8,4,2,2))
