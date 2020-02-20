@@ -335,7 +335,7 @@ levelplot(data$mean_criteria~data$Year*data$Fishery_ShortName, ylab="",xlab="",m
 dev.off()
 
 #RBI variance
-tiff('Figure_long_var.tiff',res=400,units="in",width=9,height=16,bg="transparent")
+pdf('Figure_long_var.pdf',width=9,height=16,bg="transparent")
 col.pal.se <- colorRampPalette(c( "#440154FF", "#31688EFF" ,"#35B779FF", "#FDE725FF" ))
 levelplot(data$criteria_sd^2~data$Year*data$Fishery_ShortName, ylab="",xlab="",main="",scales=list(cex=1, tck=c(1,0)), col.regions=col.pal.se,colorkey=list(space="top"))
 dev.off()
